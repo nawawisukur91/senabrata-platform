@@ -6,6 +6,31 @@ datasource db {
   provider = "postgresql"
 }
 
+// ============ USER & AUTHENTICATION ============
+model User {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  username          String   @unique
+  password          String
+  fullName          String?
+  phoneNumber       String?
+  profilePicture    String?
+  role              String   @default("USER") // USER, MITRA, ADMIN
+  isVerified        Boolean  @default(false)
+  
+  // Relations
+  investments       Investment[]
+  transactions      Transaction[]
+  orders            Order[]
+  charityDonations  CharityDonation[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("users")
+}
+
+// ============ PRODUCT & INVENTORY ============
 model Product {
   id          String   @id @default(uuid())
   name        String
@@ -20,10 +45,173 @@ model Product {
   category    String?
   stock       Int      @default(1)
   totalStock  Int      @default(1)
+  
+  // Relations
+  inventoryLogs ProductInventory[]
+  orders        Order[]
+  
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
   @@map("product")
 }
 
+model ProductInventory {
+  id          String   @id @default(uuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity    Int
+  type        String   // IN (masuk), OUT (keluar), RETURN (retur)
+  notes       String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@map("product_inventory")
+}
+
+// ============ MITRA (PARTNER) ============
+model Mitra {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  email       String   @unique
+  phoneNumber String?
+  address     String?
+  city        String?
+  province    String?
+  description String?
+  logoUrl     String?
+  websiteUrl  String?
+  
+  // Stats
+  totalProducts   Int @default(0)
+  totalSales      Float @default(0)
+  rating          Float @default(0)
+  
+  isVerified  Boolean @default(false)
+  status      String  @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("mitras")
+}
+
+// ============ STORY (DENGAN YOUTUBE) ============
+model Story {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  
+  // YouTube Integration
+  youtubeUrl  String
+  youtubeVideoId String? // Extracted dari URL untuk thumbnail
+  thumbnail   String?   // Optional custom thumbnail
+  
+  author      String?   // Nama author/penulis
+  tags        String[]  @default([]) // Array of tags
+  
+  views       Int @default(0)
+  likes       Int @default(0)
+  
+  isPublished Boolean @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("stories")
+}
+
+// ============ INVESTMENT & FINANCE ============
+model Investment {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  productName String
+  investmentType String // DIRECT, FUND, BOND, etc
+  amount      Float
+  
+  startDate   DateTime
+  endDate     DateTime?
+  status      String   @default("ACTIVE") // ACTIVE, COMPLETED, CANCELLED
+  
+  expectedReturn Float?
+  actualReturn   Float? @default(0)
+  roi            Float? @default(0) // Return on Investment percentage
+  
+  notes       String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("investments")
+}
+
+// ============ ORDERS & TRANSACTIONS ============
+model Order {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  
+  quantity    Int
+  totalPrice  Float
+  
+  status      String   @default("PENDING") // PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED
+  paymentStatus String @default("UNPAID") // UNPAID, PAID, REFUNDED
+  
+  shippingAddress String?
+  phoneNumber     String?
+  
+  transactions Transaction[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("orders")
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  orderId     String?
+  order       Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  
+  type        String   // PURCHASE, INVESTMENT, WITHDRAWAL, DEPOSIT, REFUND
+  amount      Float
+  
+  paymentMethod String? // TRANSFER, CREDIT_CARD, E_WALLET
+  status      String   @default("PENDING") // PENDING, SUCCESS, FAILED
+  
+  notes       String?
+  referenceNo String? @unique
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("transactions")
+}
+
+// ============ CHARITY & DONATIONS ============
+model CharityDonation {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  amount    Float
+  message   String?
+  category  String? // FOOD, EDUCATION, HEALTH, etc
+  
+  createdAt DateTime @default(now())
+  
+  @@map("charity_donations")
+}
+
+// Legacy - Kept for backward compatibility
 model CharityLog {
   id        String   @id @default(uuid())
   amount    Float

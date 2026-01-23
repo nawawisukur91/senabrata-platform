@@ -47,7 +47,7 @@ export default function Footer() {
               {[
                 { label: 'Pasar Komoditas', href: '/marketplace' },
                 { label: 'Cerita Kita', href: '/story' },
-                { label: 'Peluang Investasi', href: '/finance' },
+                { label: 'Peluang Investasi', href: '/login' },
                 { label: 'Hubungi Kami', href: 'mailto:halo@senabrata.com' }
               ].map((link) => (
                 <li key={link.label}>

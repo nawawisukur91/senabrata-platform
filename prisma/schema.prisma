@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  price       Float
+  weight      String?
+  height      String?
+  lineage     String?
+  location    String?
+  description String?
+  mitraName   String?
+  img         String?
+  category    String?
+  stock       Int      @default(1)
+  totalStock  Int      @default(1)
+  createdAt   DateTime @default(now())
+  @@map("product")
+}
+
+model CharityLog {
+  id        String   @id @default(uuid())
+  amount    Float
+  message   String?
+  createdAt DateTime @default(now())
+}

@@ -2,6 +2,25 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
+// Cache this page for 1 hour, revalidate every 60 seconds when requested
+export const revalidate = 60;
+
+// Generate static pages for top products at build time
+export async function generateStaticParams() {
+  try {
+    const products = await prisma.product.findMany({
+      select: { id: true },
+      take: 10, // Pre-generate top 10 products
+    });
+    return products.map((product) => ({
+      id: product.id,
+    }));
+  } catch (error) {
+    console.error('[generateStaticParams] Error:', error);
+    return [];
+  }
+}
+
 export default async function ProductDetailPage({ 
   params 
 }: { 

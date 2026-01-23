@@ -21,10 +21,21 @@ export default function Footer() {
             </p>
             {/* Social Media Icons */}
             <div className="flex gap-4">
-              {['FB', 'IG', 'YT', 'WA'].map((social) => (
-                <div key={social} className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-black hover:bg-green-600 hover:border-green-600 transition-all cursor-pointer">
-                  {social}
-                </div>
+              {[
+                { label: 'FB', url: 'https://facebook.com/senabrata' },
+                { label: 'IG', url: 'https://instagram.com/senabrata' },
+                { label: 'YT', url: 'https://youtube.com/@senabrata' },
+                { label: 'WA', url: 'https://wa.me/628123456789' }
+              ].map((social) => (
+                <a 
+                  key={social.label}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-black hover:bg-green-600 hover:border-green-600 transition-all"
+                >
+                  {social.label}
+                </a>
               ))}
             </div>
           </div>
@@ -37,7 +48,7 @@ export default function Footer() {
                 { label: 'Pasar Komoditas', href: '/marketplace' },
                 { label: 'Cerita Kita', href: '/story' },
                 { label: 'Peluang Investasi', href: '/finance' },
-                { label: 'Hubungi Kami', href: '#' }
+                { label: 'Hubungi Kami', href: 'mailto:halo@senabrata.com' }
               ].map((link) => (
                 <li key={link.label}>
                   <a href={link.href} className="text-slate-400 text-sm font-bold hover:text-white transition-colors">

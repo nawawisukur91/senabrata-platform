@@ -25,12 +25,8 @@ export default function MarketplacePage() {
   ];
 
   const allProducts = [
-    { id: 'p1', name: 'Sapi Limousin Jumbo 1 Ton', price: 28000000, stock: 5, total: 20, img: '🐂', category: 'Sapi', mitra: 'Farm Maju' },
-    { id: 'p2', name: 'Bibit Jagung Pionir Hibrida', price: 125000, stock: 85, total: 100, img: '🌽', category: 'Bibit', mitra: 'Agro Shop' },
-    { id: 'p3', name: 'Pupuk NPK Mutiara 50kg', price: 650000, stock: 12, total: 50, img: '📦', category: 'Pupuk', mitra: 'Tani Jaya' },
-    { id: 'p4', name: 'Kambing Boer Jantan Fullblood', price: 7500000, stock: 2, total: 10, img: '🐐', category: 'Kambing', mitra: 'Etawa Farm' },
-    { id: 'p5', name: 'Lahan Sawit Produktif 2Ha', price: 150000000, stock: 1, total: 1, img: '🏞️', category: 'Lahan', mitra: 'Sena Estate' },
-    { id: 'p6', name: 'Sapi Bakalan Brahman', price: 15000000, stock: 15, total: 30, img: '🐃', category: 'Sapi', mitra: 'Farm Maju' },
+    { id: 'dcf7db34-94da-4222-a7b4-25bca0f3e137', name: 'Sapi Limousin Jumbo 1 Ton', price: 28000000, stock: 5, total: 20, img: '🐂', category: 'Sapi', mitra: 'Farm Maju' },
+    { id: 'e69e2e48-6857-4727-85c1-bb5446d90e2f', name: 'Bibit Jagung Pionir Hibrida', price: 125000, stock: 85, total: 100, img: '🌽', category: 'Bibit', mitra: 'Agro Shop' },
   ];
 
   // Fungsi Filter yang bikin website makin cerdas

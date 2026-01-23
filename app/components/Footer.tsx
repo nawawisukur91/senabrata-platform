@@ -33,10 +33,15 @@ export default function Footer() {
           <div>
             <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-green-500 mb-8">Navigation</h4>
             <ul className="space-y-4">
-              {['Pasar Komoditas', 'Cerita Kita', 'Peluang Investasi', 'Hubungi Kami'].map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-slate-400 text-sm font-bold hover:text-white transition-colors">
-                    {link}
+              {[
+                { label: 'Pasar Komoditas', href: '/marketplace' },
+                { label: 'Cerita Kita', href: '/story' },
+                { label: 'Peluang Investasi', href: '/finance' },
+                { label: 'Hubungi Kami', href: '#' }
+              ].map((link) => (
+                <li key={link.label}>
+                  <a href={link.href} className="text-slate-400 text-sm font-bold hover:text-white transition-colors">
+                    {link.label}
                   </a>
                 </li>
               ))}
@@ -76,8 +81,8 @@ export default function Footer() {
             © 2026 Senabrata Capital. All Rights Reserved.
           </p>
           <div className="flex gap-8 text-[10px] font-black uppercase tracking-widest text-slate-500">
-            <a href="#" className="hover:text-white transition">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition">Terms of Service</a>
+            <a href="/privacy" className="hover:text-white transition">Privacy Policy</a>
+            <a href="/terms" className="hover:text-white transition">Terms of Service</a>
           </div>
         </div>
       </div>

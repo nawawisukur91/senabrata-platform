@@ -25,7 +25,7 @@ export default function Footer() {
                 { label: 'FB', url: 'https://facebook.com/senabrata' },
                 { label: 'IG', url: 'https://instagram.com/senabrata' },
                 { label: 'YT', url: 'https://youtube.com/@senabrata' },
-                { label: 'WA', url: 'https://wa.me/628123456789' }
+                { label: 'WA', url: 'https://wa.me/6281395109988' }
               ].map((social) => (
                 <a 
                   key={social.label}
@@ -66,7 +66,7 @@ export default function Footer() {
               <p>Gedung Senabrata Capital, Lantai 12</p>
               <p>Kawasan Bisnis Sudirman, Jakarta Selatan</p>
               <p className="text-white">halo@senabrata.com</p>
-              <p className="text-white">+62 812 3456 7890</p>
+              <p className="text-white">+62 813 9510 9988</p>
             </div>
           </div>
 

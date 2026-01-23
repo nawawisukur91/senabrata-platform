@@ -12,7 +12,7 @@ export async function generateStaticParams() {
       select: { id: true },
       take: 10, // Pre-generate top 10 products
     });
-    return products.map((product) => ({
+    return products.map((product: { id: string }) => ({
       id: product.id,
     }));
   } catch (error) {

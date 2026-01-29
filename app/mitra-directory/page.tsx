@@ -1,114 +1,83 @@
-"use client";
-
+// HAPUS "use client" - Ini wajib Server Component biar aman panggil Prisma
 import React from 'react';
 import Link from 'next/link';
+import { prisma } from "@/lib/prisma"; 
+import { MapPin, Store, AlertCircle } from 'lucide-react';
 
-export default function MitraDirectoryPage() {
-  // 🟢 DATA SIMULASI (Nantinya data ini ditarik dari Database)
-  // ID di sini harus sama dengan folder [id] agar Link berfungsi
-  const daftarMitra = [
-    { 
-      id: 'farm-maju-jaya', 
-      name: 'Farm Maju Jaya', 
-      location: 'Cianjur, Jawa Barat',
-      icon: '🐂',
-      specialty: 'Sapi Limousin',
-      rating: 4.9
-    },
-    { 
-      id: 'tani-sejahtera-group', 
-      name: 'Tani Sejahtera Group', 
-      location: 'Subang, Jawa Barat',
-      icon: '🌱',
-      specialty: 'Jagung & Palawija',
-      rating: 4.8
-    },
-    { 
-      id: 'berkah-ternak-etawa', 
-      name: 'Berkah Ternak Etawa', 
-      location: 'Lampung Tengah',
-      icon: '🐐',
-      specialty: 'Kambing Perah',
-      rating: 4.7
-    },
-    { 
-      id: 'agro-mandiri-abadi', 
-      name: 'Agro Mandiri Abadi', 
-      location: 'Malang, Jawa Timur',
-      icon: '🍎',
-      specialty: 'Apel & Hortikultura',
-      rating: 5.0
-    }
-  ];
+export default async function PenjualDirectoryPage() {
+  // 🟢 REAL DATABASE CALL: Ambil data dari tabel 'mitras' di Supabase
+  // Pastikan kamu sudah jalankan 'npx prisma db push' ya sayang
+  const daftarPenjual = await prisma.mitra.findMany({
+    orderBy: { mitraName: 'asc' }
+  });
 
   return (
-    <div className="min-h-screen bg-[#FBFBFB] pt-32 pb-20 px-6 font-sans">
+    <div className="min-h-screen bg-[#FBFBFB] pt-32 pb-20 px-6 font-sans text-slate-900">
       <div className="max-w-6xl mx-auto">
         
         {/* --- HEADER --- */}
         <div className="mb-16 text-center md:text-left">
           <span className="text-green-600 font-black text-[10px] uppercase tracking-[0.5em] mb-4 block italic">
-            Senabrata Trusted Partners
+            Senabrata Official Sellers
           </span>
           <h1 className="text-5xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
-            Direktori <span className="text-green-600">Mitra</span> <br/> Terverifikasi.
+            Direktori <span className="text-green-600">Penjual</span> <br/> Hasil Tani.
           </h1>
-          <p className="mt-6 text-slate-400 font-bold text-sm max-w-xl leading-relaxed">
-            Daftar pengelola aset profesional yang telah melalui tahap verifikasi ketat Senabrata Capital. Pilih mitra untuk melihat etalase produk mereka.
-          </p>
         </div>
 
-        {/* --- GRID DAFTAR MITRA (MAPPING) --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {daftarMitra.map((mitra) => (
-            <Link href={`/mitra-directory/${mitra.id}`} key={mitra.id} className="group">
-              <div className="bg-white border border-slate-100 p-8 rounded-[3rem] flex flex-col md:flex-row items-center gap-8 transition-all duration-500 group-hover:shadow-2xl group-hover:border-green-600/30 group-hover:-translate-y-2 relative overflow-hidden">
-                
-                {/* Visual Icon */}
-                <div className="w-24 h-24 bg-slate-50 rounded-[2rem] flex items-center justify-center text-4xl group-hover:bg-green-600 group-hover:text-white transition-all duration-500 shadow-inner">
-                  {mitra.icon}
-                </div>
-
-                {/* Content Info */}
-                <div className="flex-1 text-center md:text-left">
-                  <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
-                    <span className="text-xs font-black text-green-600 italic">★ {mitra.rating}</span>
-                    <span className="h-1 w-1 bg-slate-300 rounded-full"></span>
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{mitra.specialty}</span>
+        {/* --- LOGIKA TAMPILAN --- */}
+        {daftarPenjual.length > 0 ? (
+          /* JIKA ADA DATA DI DATABASE */
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {daftarPenjual.map((penjual) => (
+              <Link href={`/mitra-directory/${penjual.id}`} key={penjual.id} className="group">
+                <div className="bg-white border border-slate-100 p-8 rounded-[3rem] flex flex-col md:flex-row items-center gap-8 transition-all duration-500 group-hover:shadow-2xl group-hover:border-green-600/30 group-hover:-translate-y-2 relative overflow-hidden">
+                  
+                  <div className="w-24 h-24 bg-slate-50 rounded-[2rem] flex items-center justify-center overflow-hidden group-hover:bg-green-600 transition-all duration-500 shadow-inner">
+                    {penjual.logoUrl ? (
+                      <img src={penjual.logoUrl} alt={penjual.mitraName} className="w-full h-full object-cover" />
+                    ) : (
+                      <Store className="w-10 h-10 text-slate-300 group-hover:text-white transition-colors" />
+                    )}
                   </div>
-                  
-                  <h3 className="text-2xl font-black text-slate-900 uppercase italic leading-tight group-hover:text-green-600 transition-colors">
-                    {mitra.name}
-                  </h3>
-                  
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">
-                    📍 {mitra.location}
-                  </p>
+
+                  <div className="flex-1 text-center md:text-left">
+                    <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
+                      <span className="text-xs font-black text-green-600 italic">★ {penjual.rating.toFixed(1)}</span>
+                      <span className="h-1 w-1 bg-slate-300 rounded-full"></span>
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{penjual.status}</span>
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900 uppercase italic leading-tight group-hover:text-green-600 transition-colors">
+                      {penjual.mitraName}
+                    </h3>
+                    <div className="flex items-center justify-center md:justify-start gap-1 mt-2">
+                      <MapPin size={10} className="text-green-600" />
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">
+                        {penjual.city || 'Lokasi'}, {penjual.province || 'Indonesia'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-
-                {/* Arrow Indicator */}
-                <div className="hidden md:block opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-6 h-6 text-green-600">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                  </svg>
-                </div>
-
-                {/* Background Decor */}
-                <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-slate-50 rounded-full opacity-50 group-hover:bg-green-50 transition-colors"></div>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {/* --- CALL TO ACTION --- */}
-        <div className="mt-20 p-12 bg-slate-900 rounded-[3.5rem] text-center relative overflow-hidden">
-           <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
-           <h4 className="text-white font-black text-2xl uppercase italic mb-4 relative z-10">Ingin Bergabung Sebagai Mitra?</h4>
-           <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-8 relative z-10">Dapatkan akses ke ribuan investor dan kelola aset Anda secara profesional</p>
-           <button className="bg-green-600 hover:bg-green-500 text-white px-12 py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.4em] transition-all relative z-10 active:scale-95">
-             Daftar Mitra Sekarang
-           </button>
-        </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          /* JIKA DATABASE KOSONG (REAL CONDITION) */
+          <div className="flex flex-col items-center justify-center p-20 bg-white rounded-[4rem] border-2 border-dashed border-slate-100 text-center">
+            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+              <AlertCircle className="text-slate-200" size={40} />
+            </div>
+            <h3 className="text-xl font-black text-slate-900 uppercase italic tracking-tighter">Database Masih Kosong</h3>
+            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-2 max-w-xs">
+              Belum ada penjual yang terdaftar di database Senabrata. <br/> Silakan tambahkan data melalui Admin Panel atau Prisma Studio.
+            </p>
+            
+            {/* Tombol bantu buat kamu cek Prisma Studio */}
+            <div className="mt-8 px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest italic">
+              Waiting for Real Data...
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

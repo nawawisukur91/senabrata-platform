@@ -4,195 +4,225 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ ENUM USER ============
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  USER
+  MITRA
+  INVESTOR
+}
+
+//============= ENUM TRANSAKTION STATUS ================
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+//=============ENUM TRANSACTION TYPE
+enum TransactionType {
+  DEPOSIT // Investor masukin modal
+  WITHDRAW // Investor tarik dana
+  INVESTMENT // Dana masuk ke proyek tani
+  DIVIDEND // Bagi hasil ke investor
+  PURCHASE // Beli produk di marketplace
+  REVENUE // Penjual dapet duit dari laku barang
 }
 
 // ============ USER & AUTHENTICATION ============
 model User {
-  id                String   @id @default(uuid())
-  email             String   @unique
-  username          String   @unique
-  password          String
-  fullName          String?
-  phoneNumber       String?
-  profilePicture    String?
-  role              String   @default("USER") // USER, MITRA, ADMIN
-  isVerified        Boolean  @default(false)
-  
-  // Relations
-  investments       Investment[]
-  transactions      Transaction[]
-  orders            Order[]
-  charityDonations  CharityDonation[]
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
+  id                 String            @id @default(uuid())
+  email              String            @unique
+  username           String            @unique
+  password           String
+  role               Role              @default(USER)
+  status             String            @default("PENDING")
+  fullName           String?
+  phoneNumber        String?
+  address            String?           @db.Text
+  ktpNumber          String?
+  birthPlace         String?
+  birthDate          String?
+  gender             String?
+  bankAccount        String?
+  npwpNumber         String?
+  profilePicture     String?
+  category           String?
+  financeId          String?           @unique
+  isVerified         Boolean           @default(false)
+  resetToken         String?           @unique
+  resetTokenExpires  DateTime?
+  sessionVersion     Int               @default(1)
+  lastPasswordUpdate DateTime?         @default(now())
+  products           Product[]
+  investments        Investment[]
+  transactions       Transaction[]
+  orders             Order[]
+  charityDonations   CharityDonation[]
+  balance            Float             @default(0)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
   @@map("users")
 }
 
-// ============ PRODUCT & INVENTORY ============
+// ============ PRODUCT & INVESTMENT ASSETS ============
 model Product {
-  id          String   @id @default(uuid())
-  name        String
-  price       Float
-  weight      String?
-  height      String?
-  lineage     String?
-  location    String?
-  description String?
-  mitraName   String?
-  img         String?
-  category    String?
-  stock       Int      @default(1)
-  totalStock  Int      @default(1)
-  
-  // Relations
+  id            String             @id @default(uuid())
+  name          String
+  price         Float
+  roi           Float              @default(0)
+  targetAmount  Float              @default(0)
+  currentAmount Float              @default(0)
+  duration      String?            @default("4 Bulan")
+  statusProject String             @default("OPEN")
+  weight        String?
+  height        String?
+  lineage       String?
+  location      String?
+  description   String?
+  sellerId      String
+  seller        User               @relation(fields: [sellerId], references: [id])
+  img           String?
+  category      String?
+  stock         Int                @default(1)
+  totalStock    Int                @default(1)
+  isPriority    Boolean            @default(false)
   inventoryLogs ProductInventory[]
   orders        Order[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
   @@map("product")
 }
 
 model ProductInventory {
-  id          String   @id @default(uuid())
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  quantity    Int
-  type        String   // IN (masuk), OUT (keluar), RETURN (retur)
-  notes       String?
-  
-  createdAt   DateTime @default(now())
-  
+  id        String  @id @default(uuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int
+  type      String // IN, OUT, RETURN
+  notes     String?
+
+  createdAt DateTime @default(now())
+
   @@map("product_inventory")
 }
 
 // ============ MITRA (PARTNER) ============
 model Mitra {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  email       String   @unique
-  phoneNumber String?
-  address     String?
-  city        String?
-  province    String?
-  description String?
-  logoUrl     String?
-  websiteUrl  String?
-  
-  // Stats
-  totalProducts   Int @default(0)
-  totalSales      Float @default(0)
-  rating          Float @default(0)
-  
-  isVerified  Boolean @default(false)
-  status      String  @default("ACTIVE") // ACTIVE, INACTIVE, SUSPENDED
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id            String   @id @default(uuid())
+  userId        String?  @unique // Supaya tahu ini toko milik siapa
+  username      String   @unique
+  email         String   @unique
+  farmName      String   @unique
+  phoneNumber   String?
+  address       String?
+  city          String?
+  province      String?
+  description   String?
+  logoUrl       String?
+  fotoKtp       String
+  websiteUrl    String?
+  totalProducts Int      @default(0)
+  totalSales    Float    @default(0)
+  rating        Float    @default(0)
+  isVerified    Boolean  @default(false) // Ini buat "Approved" dari Admin
+  status        String   @default("PENDING") // Kita ganti default ke PENDING ya sayang biar aman
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  otpCode       String?
+
   @@map("mitras")
 }
 
-// ============ STORY (DENGAN YOUTUBE) ============
+// ============ STORY ============
 model Story {
-  id          String   @id @default(uuid())
-  title       String
-  description String?
-  
-  // YouTube Integration
-  youtubeUrl  String
-  youtubeVideoId String? // Extracted dari URL untuk thumbnail
-  thumbnail   String?   // Optional custom thumbnail
-  
-  author      String?   // Nama author/penulis
-  tags        String[]  @default([]) // Array of tags
-  
-  views       Int @default(0)
-  likes       Int @default(0)
-  
-  isPublished Boolean @default(true)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id             String   @id @default(uuid())
+  title          String
+  description    String?
+  youtubeUrl     String
+  youtubeVideoId String?
+  thumbnail      String?
+  author         String?
+  tags           String[] @default([])
+  views          Int      @default(0)
+  likes          Int      @default(0)
+  isPublished    Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
   @@map("stories")
 }
 
-// ============ INVESTMENT & FINANCE ============
+// ============ INVESTMENT LOGS ============
 model Investment {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  productName String
-  investmentType String // DIRECT, FUND, BOND, etc
-  amount      Float
-  
-  startDate   DateTime
-  endDate     DateTime?
-  status      String   @default("ACTIVE") // ACTIVE, COMPLETED, CANCELLED
-  
+  id             String    @id @default(uuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productName    String
+  investmentType String
+  amount         Float
+  startDate      DateTime  @default(now())
+  endDate        DateTime?
+  status         String    @default("ACTIVE")
   expectedReturn Float?
-  actualReturn   Float? @default(0)
-  roi            Float? @default(0) // Return on Investment percentage
-  
-  notes       String?
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  actualReturn   Float?    @default(0)
+  roi            Float?    @default(0)
+  notes          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("investments")
 }
 
-// ============ ORDERS & TRANSACTIONS ============
+// ============ TRANSACTIONS & ORDERS ============
 model Order {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  
-  quantity    Int
-  totalPrice  Float
-  
-  status      String   @default("PENDING") // PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED
-  paymentStatus String @default("UNPAID") // UNPAID, PAID, REFUNDED
-  
+  id              String        @id @default(uuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product       @relation(fields: [productId], references: [id])
+  quantity        Int
+  totalPrice      Float
+  logisticId      String?
+  bankId          String?
+  status          String        @default("PENDING")
+  paymentStatus   String        @default("UNPAID")
   shippingAddress String?
   phoneNumber     String?
-  
-  transactions Transaction[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  resiNumber      String?       @unique
+  shippingNote    String?       @default("Pesanan sedang diproses")
+  transactions    Transaction[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
   @@map("orders")
 }
 
+//============== TRANSACTION =================
 model Transaction {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  orderId     String?
-  order       Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  
-  type        String   // PURCHASE, INVESTMENT, WITHDRAWAL, DEPOSIT, REFUND
-  amount      Float
-  
-  paymentMethod String? // TRANSFER, CREDIT_CARD, E_WALLET
-  status      String   @default("PENDING") // PENDING, SUCCESS, FAILED
-  
-  notes       String?
-  referenceNo String? @unique
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id            String            @id @default(uuid())
+  userId        String
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderId       String?
+  order         Order?            @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  type          TransactionType
+  amount        Float
+  status        TransactionStatus @default(PENDING)
+  paymentMethod String? // e.g., "BANK_TRANSFER", "XENDIT", "BALANCE"
+  referenceNo   String?           @unique // Nomor referensi unik (misal: WD-123456)
+  notes         String? // Catatan tambahan (misal: "Penarikan Dana Darurat")
+  adminNote     String? // Catatan dari Admin (misal: "Bukti transfer tidak valid")
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
   @@map("transactions")
 }
 
@@ -201,20 +231,79 @@ model CharityDonation {
   id        String   @id @default(uuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
   amount    Float
   message   String?
-  category  String? // FOOD, EDUCATION, HEALTH, etc
-  
+  category  String?
   createdAt DateTime @default(now())
-  
+
   @@map("charity_donations")
 }
 
-// Legacy - Kept for backward compatibility
+//============ CHARITYLOG ===========
 model CharityLog {
   id        String   @id @default(uuid())
   amount    Float
   message   String?
   createdAt DateTime @default(now())
+
+  @@map("charity_logs")
+}
+
+// ============ SETTINGS & LOGISTICS ============
+model Setting {
+  id                String   @id @default("global-config")
+  adminPhone        String   @default("6281108210169") // Khusus Super Admin
+  siteName          String   @default("Senabrata Platform")
+  youtubeCeritaKita String?  @default("https://youtube.com/...")
+  articleEdufarm    String?  @db.Text
+  updatedAt         DateTime @updatedAt
+
+  @@map("setting")
+}
+
+//============ Logistic ================
+model Logistic {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  price     Float
+  type      String   @default("REGULAR")
+  createdAt DateTime @default(now())
+
+  @@map("logistic")
+}
+
+//============== BANK =============
+model Bank {
+  id            String  @id @default(uuid())
+  name          String
+  code          String
+  accountNumber String
+  accountName   String
+  isActive      Boolean @default(true)
+
+  @@map("bank")
+}
+
+//=============== LOAN PARTNER ==============
+model LoanPartner {
+  id          String   @id @default(cuid())
+  bankName    String
+  loanName    String
+  limitAmount String
+  interest    String
+  applyUrl    String
+  logoUrl     String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@map("loanpartner")
+}
+
+//============== REG SETTING ==============
+model RegSetting {
+  id        String   @id @default("terms_and_conditions")
+  content   String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@map("reg_settings")
 }

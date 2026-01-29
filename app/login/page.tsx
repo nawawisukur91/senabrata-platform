@@ -2,18 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
   
-  // 🟢 STATE: Keranjang data & Password visibility
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  // 🟢 1. GANTI 'email' jadi 'identifier' (Biar bisa diisi email atau username)
+  const [formData, setFormData] = useState({ identifier: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
-
-  // 🟡 STATE UNTUK SLIDE SHOW
+  const [loading, setLoading] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // 🖼️ DATA GAMBAR SLIDE SHOW
   const slides = [
     {
       url: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1200",
@@ -32,7 +32,6 @@ export default function LoginPage() {
     }
   ];
 
-  // 🕒 LOGIKA TIMER SLIDE SHOW (Ganti tiap 5 detik)
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
@@ -40,26 +39,69 @@ export default function LoginPage() {
     return () => clearInterval(timer);
   }, [slides.length]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Selamat Datang Kembali!`);
-    
-    // Reset form agar bersih
-    setFormData({ email: '', password: '' });
+    setLoading(true);
 
-    // Pindah ke Dashboard
-    setTimeout(() => {
-      router.push('/dashboard');
-    }, 1000);
+    try {
+      // 🟢 2. KIRIM 'identifier' ke backend. 
+      const result = await signIn("credentials", {
+        username: formData.identifier, // Dikirim sebagai 'username' ke lib/auth.ts
+        password: formData.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        alert("Akses Ditolak! Periksa Kembali User & Password.");
+        setFormData(prev => ({ ...prev, password: '' }));
+      } else {
+        // 💉 SUNTIKAN NAVIGASI 4 JALUR (Mulai dari sini)
+        const sessionResponse = await fetch('/api/auth/session');
+        const session = await sessionResponse.json();
+        const userRole = session?.user?.role;
+
+        alert(`Verifikasi Berhasil! Selamat Datang, ${session?.user?.name}`);
+
+        switch (userRole) {
+          case 'SUPER_ADMIN':
+            alert("Selamat Datang, Baginda Raja!");
+            router.push('/admin/settings');
+            break;
+          case 'ADMIN':
+            router.push('/admin/dashboard');
+            break;
+          case 'MITRA':
+            // Redirect ke Dashboard Seller/Nasabah
+            router.push('/mitra-directory/[id]');
+            break;
+          case 'INVESTOR':
+            // Redirect ke Portofolio Investasi
+            router.push('/dashboard/portofolio');
+            break;
+          case 'USER':
+            // Pembeli langsung kita suguhkan belanjaan
+            router.push('/marketplace');
+            break;
+          default:
+            router.push('/');
+            break;
+        }
+        // 💉 AKHIR SUNTIKAN
+
+        router.refresh(); 
+      }
+    } catch (err) {
+      alert("Aduh, sistem lagi pusing. Coba lagi nanti ya!");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col md:flex-row font-sans overflow-hidden">
       
-      {/* --- BAGIAN KIRI: VISUAL SLIDE SHOW (70% Lebar) --- */}
+      {/* --- KIRI: VISUAL SLIDE SHOW --- */}
       <div className="hidden md:flex md:w-[70%] relative overflow-hidden bg-slate-900 items-center p-20">
-        
-        {/* Render Semua Gambar Slide dengan Transisi */}
         {slides.map((slide, index) => (
           <div
             key={index}
@@ -70,78 +112,66 @@ export default function LoginPage() {
             <img 
               src={slide.url} 
               alt={slide.title} 
-              className="w-full h-full object-cover scale-105 transition-transform duration-[5000ms] ease-linear"
+              className="w-full h-full object-cover scale-105 transition-transform duration-[5000ms]"
               style={{ transform: index === currentSlide ? 'scale(1.1)' : 'scale(1)' }}
             />
           </div>
         ))}
-
-        {/* Overlay Gelap agar Teks Terbaca */}
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-slate-950/80 to-transparent"></div>
-
-        {/* Teks Branding di Atas Slide Show */}
         <div className="relative z-10">
-          <span className="text-green-500 font-black text-[10px] uppercase tracking-[0.5em] mb-4 block italic">
-            Senabrata Capital System
-          </span>
+          <span className="text-green-500 font-black text-[10px] uppercase tracking-[0.5em] mb-4 block italic">Senabrata Capital System</span>
           <h2 className="text-7xl font-black text-white tracking-tighter uppercase italic leading-[0.85]">
-            Membangun <br/> 
-            <span className="text-green-600 font-outline-2">Ketahanan</span> <br/> 
-            Pangan.
+            Membangun <br/> <span className="text-green-600">Ketahanan</span> <br/> Pangan.
           </h2>
           <div className="mt-8 h-1.5 w-24 bg-green-600"></div>
-          <p className="text-white text-sm font-bold mt-8 tracking-[0.2em] uppercase opacity-80 italic transition-all duration-500">
+          <p className="text-white text-sm font-bold mt-8 tracking-[0.2em] uppercase opacity-80 italic">
             {slides[currentSlide].desc}
           </p>
         </div>
       </div>
 
-      {/* --- BAGIAN KANAN: FORM LOGIN (30% Lebar) --- */}
+      {/* --- KANAN: FORM LOGIN --- */}
       <div className="flex-1 flex items-center justify-center p-10 bg-white shadow-[-20px_0_50px_rgba(0,0,0,0.1)] z-20">
         <div className="w-full max-w-xs">
-          
           <div className="mb-12">
-            <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
-              Log <span className="text-green-600">In.</span>
-            </h1>
-            <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mt-3 italic opacity-60">
-              Akses Client Portal Senabrata.
-            </p>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">Log <span className="text-green-600">In.</span></h1>
+            <p className="text-slate-500 text-[9px] font-black uppercase tracking-widest mt-3 italic opacity-60">Akses Client Portal Senabrata.</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
-            {/* INPUT EMAIL */}
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1 italic">Email Address</label>
+              <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-1 italic">Username or Email</label>
               <input 
-                type="email" 
-                required
-                value={formData.email}
-                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4.5 px-5 text-sm font-bold text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-green-500/20 focus:border-green-600 transition-all outline-none"
-                placeholder="mitra@senabrata.com"
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                type="text" 
+                required 
+                disabled={loading}
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4.5 px-5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-green-500/20 focus:border-green-600 outline-none transition-all disabled:opacity-50"
+                placeholder="adityasnb / aditya@senabrata.com"
+                value={formData.identifier}
+                onChange={(e) => setFormData({...formData, identifier: e.target.value})}
               />
             </div>
 
-            {/* INPUT PASSWORD */}
             <div className="space-y-2">
               <div className="flex justify-between items-center px-1">
                 <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest italic">Secret Password</label>
-                <a href="#" className="text-[8px] font-black text-green-600 uppercase hover:underline">Forgot?</a>
+                <Link href="/forgot-password" className="text-[8px] font-black text-green-600 uppercase hover:underline transition-all">Forgot?</Link>
               </div>
+              
               <div className="relative group">
                 <input 
                   type={showPassword ? "text" : "password"} 
-                  required
-                  value={formData.password}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4.5 px-5 pr-12 text-sm font-bold text-slate-900 placeholder:text-slate-300 focus:ring-2 focus:ring-green-500/20 focus:border-green-600 transition-all outline-none"
+                  required 
+                  disabled={loading}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4.5 px-5 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-green-500/20 focus:border-green-600 outline-none transition-all disabled:opacity-50"
                   placeholder="••••••••"
+                  value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-black text-[10px] uppercase hover:text-green-600 transition-colors"
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 font-black text-[10px] uppercase"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -149,29 +179,25 @@ export default function LoginPage() {
             </div>
 
             <button 
-              type="submit"
-              className="w-full bg-slate-900 text-white font-black py-5 rounded-2xl text-[10px] uppercase tracking-[0.4em] shadow-2xl hover:bg-green-600 transition-all active:scale-95 mt-4"
+              type="submit" 
+              disabled={loading}
+              className="w-full bg-slate-900 text-white font-black py-5 rounded-2xl text-[10px] uppercase tracking-[0.4em] shadow-2xl hover:bg-green-600 transition-all active:scale-95 disabled:bg-slate-300"
             >
-              Sign In Now
+              {loading ? "Verifying..." : "Sign In Now"}
             </button>
           </form>
 
-          {/* 🔗 LINK PENYAMBUNG KE REGISTER */}
           <div className="text-center mt-16">
-            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-3">
-              Not a member yet?
-            </p>
+            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-3">Not a member yet?</p>
             <button 
               onClick={() => router.push('/register')} 
-              className="text-slate-900 hover:text-green-600 font-black text-[11px] uppercase tracking-widest transition-all border-b-2 border-slate-900 hover:border-green-600 pb-1"
+              className="text-slate-900 hover:text-green-600 font-black text-[11px] uppercase tracking-widest border-b-2 border-slate-900 hover:border-green-600 pb-1"
             >
               Daftar Akun Baru
             </button>
           </div>
-
         </div>
       </div>
-
     </div>
   );
 }

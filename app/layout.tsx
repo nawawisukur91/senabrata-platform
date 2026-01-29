@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-// IMPORT NAVBAR: Pastikan file Navbar.tsx ada di dalam folder components
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+// 1. IMPORT PROVIDER SAKTI
+import AuthProvider from "./components/AuthProvider"; 
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,19 +28,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg--50`}
-      >
-        {/* 1. NAVBAR DI ATAS: Melayang di semua halaman */}
-        <Navbar />
-
-        {/* 2. MAIN CONTENT: Dikasih pt-28 (padding top) biar gak ketutup Navbar */}
-        <main className="pt-0 min-h-screen">
-          {children}
-        </main>
-
-        {/* 3. OPTIONAL: Footer bisa ditaruh di sini nantinya */}
-        <Footer />
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg--50`}>
+        {/* 2. BUNGKUS SEMUA DENGAN AUTH PROVIDER */}
+        <AuthProvider>
+          <Navbar />
+          <main className="pt-0 min-h-screen">
+            {children}
+          </main>
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );
